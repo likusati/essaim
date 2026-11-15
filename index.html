@@ -395,7 +395,11 @@ function unlockAudio(){try{if(navigator.audioSession)navigator.audioSession.type
  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=='running')ac.resume();
   const sb=ac.createBufferSource();sb.buffer=ac.createBuffer(1,1,22050);sb.connect(ac.destination);sb.start(0);}catch(e){}}
 ['pointerdown','touchend'].forEach(ev=>addEventListener(ev,()=>{if(!ac){unlockAudio();if(ac&&state==='menu')playSong('menu');}else if(ac.state!=='running')try{ac.resume()}catch(e){}},true));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ac&&ac.state!=='running')try{ac.resume()}catch(e){}});
+// le son se coupe quand on quitte la page ou l'app, et reprend au retour
+function audioOff(){if(ac&&ac.state==='running')try{ac.suspend()}catch(e){}}
+function audioOn(){if(!document.hidden&&ac&&ac.state!=='running')try{ac.resume()}catch(e){}}
+document.addEventListener('visibilitychange',()=>{document.hidden?audioOff():audioOn();});
+addEventListener('pagehide',audioOff);addEventListener('blur',audioOff);addEventListener('pageshow',audioOn);addEventListener('focus',audioOn);
 go.addEventListener('click',()=>{unlockAudio();
  try{if(TILT&&window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){DeviceOrientationEvent.requestPermission().catch(()=>{});}}catch(e){}
  ui.style.display='none';ui.classList.remove('on');state='play';reset();
