@@ -10,6 +10,15 @@
 <meta name="apple-mobile-web-app-title" content="Hesmos">
 <meta name="theme-color" content="#05030f">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hesmos">
+<meta property="og:title" content="Hesmos">
+<meta property="og:description" content="Jeu de tir spatial en pixel art, à jouer au doigt sur iPhone.">
+<meta property="og:url" content="https://likusati.github.io/essaim/">
+<meta property="og:image" content="https://likusati.github.io/essaim/icon.png">
+<meta name="twitter:card" content="summary">
+<meta name="description" content="Jeu de tir spatial en pixel art, à jouer au doigt sur iPhone.">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -42,7 +51,7 @@ p{margin:6px 14px;color:#fff;font-size:9px;line-height:1.9}
 <button id="mute">♪</button>
 <div id="ui" class="on">
   <canvas id="logo"></canvas><h1 id="ttl" style="display:none">HESMOS</h1>
-  <p id="info">Incline l'iPhone (ou glisse le doigt) pour piloter.<br>Tiens-le comme tu veux jouer avant de toucher JOUER.</p>
+  <p id="info">Glisse le doigt sur l'écran pour piloter.<br>Le vaisseau tire tout seul.</p>
   <p id="legend"><b style="color:#ff5fa0">♥</b> vie · <b style="color:#ffb030">P</b> arme · <b style="color:#5ff">B</b> bouclier · <b style="color:#c9f">✹</b> bombe<br>Bombe : bouton en bas à droite, ou tape à deux doigts.<br>Enchaîne sans être touché : score ×2, ×3…</p>
   <div id="entry"><p style="color:#ff4">Tu entres au tableau !<br>Tes initiales :</p><div id="ini"></div><button id="iniok">OK</button></div>
   <table id="top"></table>
@@ -157,7 +166,8 @@ function drawBg(){cx.fillStyle='#000';cx.fillRect(-20,-20,W+40,H+40);const ny=Ma
 
 // ================= ÉTAT =================
 let tilt=null,tiltB=null,baseB=45,tiltOK=false,touchX=null,touchY=null,steerId=null,ptrs=new Set(),keys={};
-addEventListener('deviceorientation',e=>{if(e.gamma!=null){tilt=e.gamma;tiltB=e.beta;tiltOK=true;}});
+const TILT=false; // true = pilotage par inclinaison
+addEventListener('deviceorientation',e=>{if(TILT&&e.gamma!=null){tilt=e.gamma;tiltB=e.beta;tiltOK=true;}});
 let state='menu',ship={x:W/2,y:H-150,inv:0},shots=[],bolts=[],foes=[],parts=[],drops=[],boss=null;
 let score=0,lives=3,wave=0,t=0,fireT=0,swayT=0,diveT=0,kamiT=0,flash=0,wflash=0,shake=0,msgT=0,msg='',sub='';
 let wpn=1,shield=0,bombs=1,combo=0,nextLife=20000,bonusWave=false,bonusHits=0,clearing=false,interT=0;
@@ -387,9 +397,9 @@ function unlockAudio(){try{if(navigator.audioSession)navigator.audioSession.type
 ['pointerdown','touchend'].forEach(ev=>addEventListener(ev,()=>{if(!ac){unlockAudio();if(ac&&state==='menu')playSong('menu');}else if(ac.state!=='running')try{ac.resume()}catch(e){}},true));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ac&&ac.state!=='running')try{ac.resume()}catch(e){}});
 go.addEventListener('click',()=>{unlockAudio();
- try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){DeviceOrientationEvent.requestPermission().catch(()=>{});}}catch(e){}
+ try{if(TILT&&window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){DeviceOrientationEvent.requestPermission().catch(()=>{});}}catch(e){}
  ui.style.display='none';ui.classList.remove('on');state='play';reset();
- setTimeout(()=>{if(state==='play'&&wave===1)say(tiltOK?'INCLINAISON OK':'PILOTAGE AU DOIGT',2.5);},2300);});
+ setTimeout(()=>{if(TILT&&state==='play'&&wave===1)say(tiltOK?'INCLINAISON OK':'PILOTAGE AU DOIGT',2.5);},2300);});
 
 function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H];}
 cv.addEventListener('pointerdown',e=>{e.preventDefault();const[x,y]=pos(e);ptrs.add(e.pointerId);
