@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Cascade</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cascade">
+<meta name="theme-color" content="#1f1a24">
+<meta name="description" content="Un jeu de blocs qui tombent, au doigt sur iPhone et iPad.">
+<link rel="apple-touch-icon" href="cascade-icon.png">
+<link rel="icon" href="cascade-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cascade">
+<meta property="og:description" content="Un jeu de blocs qui tombent, au doigt sur iPhone et iPad.">
+<meta property="og:image" content="https://likusati.github.io/essaim/cascade-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: un petit jeu d'arcade de poche, chaleureux, sans fioritures
+   IDEA: une console portable : boîtier, écran encastré, gros boutons
+   PICTURE: le plateau de jeu lui-même, au centre, le plus grand possible
+   COLOUR and TYPE: boîtier aubergine-charbon, écran presque noir, pièces aux couleurs maison ; Chakra Petch
+   LAYOUT: compteurs en haut, plateau au milieu, boutons sous le pouce */
+:root{color-scheme:dark;--bg:#1f1a24;--case:#2a2331;--screen:#0e0c12;--ink:#f4eef6;--mute:#a99bb3;--acc:#ff8a5c}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Chakra Petch",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.app{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;max-width:520px;margin:0 auto;
+  padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+header{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto auto;gap:8px;align-items:stretch}
+.st,.nx{background:var(--case);border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;justify-content:center}
+.st small,.nx small{font-size:13px;color:var(--mute)}
+.st b{font-size:20px;font-variant-numeric:tabular-nums;line-height:1.1}
+.nx{align-items:center;padding:4px 8px}
+#next{width:52px;height:34px}
+.ic{width:48px;border:0;border-radius:12px;background:var(--case);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.ic:focus-visible,.pad button:focus-visible,.ov button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.well{position:relative;display:grid;place-items:center;min-height:0}
+.frame{position:relative;background:var(--case);padding:8px;border-radius:16px;box-shadow:0 10px 30px #0008,inset 0 1px 0 #ffffff14}
+#board{display:block;background:var(--screen);border-radius:8px;touch-action:none}
+.ov{position:absolute;inset:8px;border-radius:8px;background:#0e0c12d9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:16px}
+.ov[hidden]{display:none}
+.ov h1{margin:0;font-size:40px;line-height:1.05;letter-spacing:.02em}
+.ov h1 span{color:var(--acc)}
+.ov p{margin:0;color:var(--mute);font-size:15px;max-width:22em}
+.ov button{font:700 18px "Chakra Petch",sans-serif;border:0;border-radius:14px;padding:12px 28px;min-height:48px;background:var(--acc);color:#24130b;cursor:pointer}
+.pad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pad button{height:64px;border:0;border-radius:16px;background:var(--case);color:var(--ink);display:grid;place-items:center;touch-action:manipulation;cursor:pointer;box-shadow:inset 0 -3px 0 #0006,inset 0 1px 0 #ffffff12}
+.pad button.on{transform:translateY(2px);box-shadow:inset 0 -1px 0 #0006;background:#382f40}
+.pad button.rot{background:var(--acc);color:#24130b}
+.pad svg,.ic svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.g{display:contents}
+@media (min-width:700px){.app{max-width:760px;gap:14px}.pad button{height:84px;border-radius:20px}.pad svg{width:34px;height:34px}.st b{font-size:24px}}
+@media (min-width:700px) and (orientation:landscape){
+  .app{max-width:none;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:24px}
+  header{grid-column:1/-1;max-width:760px;width:100%;justify-self:center}
+  .well{grid-column:2;grid-row:2}
+  .pad{display:contents}
+  .g{display:grid;gap:14px;grid-row:2;align-self:end;margin-bottom:4vh}
+  .gL{grid-column:1;grid-template-columns:1fr 1fr;justify-self:end;width:min(100%,260px)}
+  .gR{grid-column:3;grid-template-columns:1fr 1fr;justify-self:start;width:min(100%,260px)}
+  .gR .rot{grid-column:1/-1}
+  .pad button{height:100px}}
+@media (prefers-reduced-motion:reduce){.pad button.on{transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="st"><small>Score</small><b id="score">0</b></div>
+    <div class="st"><small>Niveau</small><b id="level">1</b></div>
+    <div class="st"><small>Lignes</small><b id="lines">0</b></div>
+    <div class="nx"><small>Suivante</small><canvas id="next"></canvas></div>
+    <button class="ic" id="pause" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg></button>
+  </header>
+  <div class="well" id="well">
+    <div class="frame">
+      <canvas id="board" aria-label="Plateau de jeu"></canvas>
+      <div class="ov" id="ov">
+        <h1>Cas<span>cade</span></h1>
+        <p id="msg">Glisse le doigt sur le plateau pour déplacer, touche pour tourner, balaie vers le bas pour lâcher.</p>
+        <p id="best"></p>
+        <button id="go">Jouer</button>
+      </div>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="g gL">
+    <button data-a="left" aria-label="Gauche"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button data-a="right" aria-label="Droite"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div><div class="g gR">
+    <button data-a="rot" class="rot" aria-label="Tourner"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2.1-5"/><path d="M19 4v4h-4"/></svg></button>
+    <button data-a="down" aria-label="Descendre"><svg viewBox="0 0 24 24"><path d="M12 5v13M6 12l6 6 6-6"/></svg></button>
+    <button data-a="drop" aria-label="Lâcher"><svg viewBox="0 0 24 24"><path d="M6 6l6 6 6-6M6 12l6 6 6-6M5 21h14"/></svg></button>
+    </div>
+  </div>
+</div>
+<script>
+{
+const C=10,R=20;
+const SH={I:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],O:[[1,1],[1,1]],T:[[0,1,0],[1,1,1],[0,0,0]],S:[[0,1,1],[1,1,0],[0,0,0]],Z:[[1,1,0],[0,1,1],[0,0,0]],J:[[1,0,0],[1,1,1],[0,0,0]],L:[[0,0,1],[1,1,1],[0,0,0]]};
+const CO={I:'#ff7a6b',O:'#f3d27a',T:'#3fc1b0',S:'#b47ce8',Z:'#6fb7ff',J:'#c8e06a',L:'#ff9ec7'};
+const PTS=[0,100,300,500,800];
+const bd=document.getElementById('board'),bx=bd.getContext('2d');
+const nc=document.getElementById('next'),nx=nc.getContext('2d');
+const $=id=>document.getElementById(id);
+let grid,cur,nextK,bag=[],score,lines,level,state='idle',acc=0,last=0,cs=24,clearing=null;
+let best=0;try{best=+localStorage.getItem('cascade-best')||0}catch(e){}
+const showBest=()=>{$('best').textContent=best?'Record : '+best.toLocaleString('fr-FR'):''};showBest();
+
+const take=()=>{if(!bag.length){bag=Object.keys(SH);for(let i=bag.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[bag[i],bag[j]]=[bag[j],bag[i]]}}return bag.pop()};
+const spawn=()=>{const k=nextK||take();nextK=take();const m=SH[k].map(r=>r.slice());cur={k,m,x:(C-m[0].length)/2|0,y:k==='I'?-1:0};if(hit(cur.m,cur.x,cur.y))over();drawNext()};
+const hit=(m,x,y)=>{for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++)if(m[r][c]){const X=x+c,Y=y+r;if(X<0||X>=C||Y>=R)return true;if(Y>=0&&grid[Y][X])return true}return false};
+const rot=m=>m[0].map((_,i)=>m.map(r=>r[i]).reverse());
+const speed=()=>Math.max(70,800-(level-1)*65);
+
+function move(dx){if(state!=='play'||clearing)return;if(!hit(cur.m,cur.x+dx,cur.y)){cur.x+=dx;draw()}}
+function turn(){if(state!=='play'||clearing||cur.k==='O')return;const m=rot(cur.m);for(const o of [0,-1,1,-2,2])if(!hit(m,cur.x+o,cur.y)){cur.m=m;cur.x+=o;draw();return}}
+function soft(){if(state!=='play'||clearing)return;if(!hit(cur.m,cur.x,cur.y+1)){cur.y++;score+=1;acc=0;stats();draw()}else lock()}
+function drop(){if(state!=='play'||clearing)return;let n=0;while(!hit(cur.m,cur.x,cur.y+1)){cur.y++;n++}score+=n*2;lock()}
+function lock(){
+  for(let r=0;r<cur.m.length;r++)for(let c=0;c<cur.m[r].length;c++)if(cur.m[r][c]){const Y=cur.y+r;if(Y<0){over();return}grid[Y][cur.x+c]=CO[cur.k]}
+  const full=[];grid.forEach((row,i)=>{if(row.every(Boolean))full.push(i)});
+  if(full.length){clearing={rows:full,t:0};cur=null;score+=PTS[full.length]*level;lines+=full.length;level=1+(lines/10|0);stats();draw()}
+  else{spawn();stats();draw()}
+}
+function finishClear(){const rows=clearing.rows;grid=grid.filter((_,i)=>!rows.includes(i));while(grid.length<R)grid.unshift(Array(C).fill(null));clearing=null;spawn();draw()}
+function over(){state='over';cur=null;if(score>best){best=score;try{localStorage.setItem('cascade-best',best)}catch(e){}}
+  $('msg').textContent='Partie terminée — '+score.toLocaleString('fr-FR')+' points.';showBest();$('go').textContent='Rejouer';$('ov').hidden=false;draw()}
+function start(){grid=Array.from({length:R},()=>Array(C).fill(null));score=0;lines=0;level=1;bag=[];nextK=null;clearing=null;acc=0;spawn();stats();state='play';$('ov').hidden=true;draw()}
+function pause(){if(state==='play'){state='pause';$('msg').textContent='En pause.';$('go').textContent='Reprendre';$('ov').hidden=false}else if(state==='pause'){state='play';$('ov').hidden=true;last=performance.now()}}
+function stats(){$('score').textContent=score.toLocaleString('fr-FR');$('level').textContent=level;$('lines').textContent=lines}
+
+function cell(ctx,x,y,s,col,ghost){
+  const p=Math.max(1,s*.06),r=s*.18;
+  ctx.beginPath();ctx.roundRect(x+p,y+p,s-2*p,s-2*p,r);
+  if(ghost){ctx.strokeStyle=col+'88';ctx.lineWidth=Math.max(1,s*.07);ctx.stroke();return}
+  ctx.fillStyle=col;ctx.fill();
+  ctx.fillStyle='#ffffff40';ctx.beginPath();ctx.roundRect(x+p*2,y+p*2,s-4*p,s*.22,r*.6);ctx.fill();
+  ctx.fillStyle='#00000030';ctx.beginPath();ctx.roundRect(x+p*2,y+s*.72,s-4*p,s*.2,r*.6);ctx.fill();
+}
+function draw(){
+  const s=cs;bx.clearRect(0,0,C*s,R*s);
+  bx.strokeStyle='#ffffff0a';bx.lineWidth=1;
+  for(let c=1;c<C;c++){bx.beginPath();bx.moveTo(c*s+.5,0);bx.lineTo(c*s+.5,R*s);bx.stroke()}
+  for(let r=1;r<R;r++){bx.beginPath();bx.moveTo(0,r*s+.5);bx.lineTo(C*s,r*s+.5);bx.stroke()}
+  if(!grid)return;
+  grid.forEach((row,y)=>row.forEach((v,x)=>{if(v)cell(bx,x*s,y*s,s,v)}));
+  if(clearing){bx.fillStyle='rgba(255,255,255,'+(0.85-clearing.t/260)+')';for(const y of clearing.rows)bx.fillRect(0,y*s,C*s,s)}
+  if(cur){let gy=cur.y;while(!hit(cur.m,cur.x,gy+1))gy++;
+    cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v&&gy+r>=0)cell(bx,(cur.x+c)*s,(gy+r)*s,s,CO[cur.k],true)}));
+    cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v&&cur.y+r>=0)cell(bx,(cur.x+c)*s,(cur.y+r)*s,s,CO[cur.k])}))}
+}
+function drawNext(){
+  const d=devicePixelRatio||1,W=52,H=34;nc.width=W*d;nc.height=H*d;nx.setTransform(d,0,0,d,0,0);nx.clearRect(0,0,W,H);
+  if(!nextK)return;const m=SH[nextK].filter(r=>r.some(Boolean)),w=Math.max(...m.map(r=>r.lastIndexOf(1)+1)),l=Math.min(...m.map(r=>r.indexOf(1)).filter(i=>i>=0));
+  const s=Math.min(12,(W-4)/(w-l)),ox=(W-(w-l)*s)/2,oy=(H-m.length*s)/2;
+  m.forEach((row,r)=>row.forEach((v,c)=>{if(v)cell(nx,ox+(c-l)*s,oy+r*s,s,CO[nextK])}));
+}
+function fit(){
+  const w=$('well'),W=w.clientWidth-16,H=w.clientHeight-16;
+  cs=Math.max(10,Math.floor(Math.min(W/C,H/R)));
+  const d=devicePixelRatio||1;bd.width=C*cs*d;bd.height=R*cs*d;bd.style.width=C*cs+'px';bd.style.height=R*cs+'px';bx.setTransform(d,0,0,d,0,0);draw();drawNext();
+}
+const ro=new ResizeObserver(fit);ro.observe($('well'));
+
+function loop(t){
+  const dt=t-(last||t);last=t;
+  if(state==='play'){
+    if(clearing){clearing.t+=dt;if(clearing.t>=200)finishClear();else draw()}
+    else{acc+=dt;if(acc>=speed()){acc=0;if(!hit(cur.m,cur.x,cur.y+1)){cur.y++;draw()}else lock()}}
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+const act={left:()=>move(-1),right:()=>move(1),rot:turn,down:soft,drop};
+document.querySelectorAll('.pad button').forEach(b=>{
+  const a=b.dataset.a,rep=a==='left'||a==='right'||a==='down';let t1,t2;
+  const stop=()=>{clearTimeout(t1);clearInterval(t2);b.classList.remove('on')};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('on');act[a]();if(rep)t1=setTimeout(()=>{t2=setInterval(act[a],a==='down'?45:70)},170)});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,stop));
+});
+
+let tx,ty,tt,mx,my,moved;
+bd.addEventListener('pointerdown',e=>{tx=mx=e.clientX;ty=my=e.clientY;tt=performance.now();moved=false;bd.setPointerCapture(e.pointerId)});
+bd.addEventListener('pointermove',e=>{if(tx==null)return;
+  while(e.clientX-mx>cs*.9){move(1);mx+=cs*.9;moved=true}
+  while(mx-e.clientX>cs*.9){move(-1);mx-=cs*.9;moved=true}
+  while(e.clientY-my>cs){soft();my+=cs;moved=true}});
+bd.addEventListener('pointerup',e=>{if(tx==null)return;const dy=e.clientY-ty,dx=e.clientX-tx,dt=performance.now()-tt;
+  if(dy>cs*2.5&&dt<260&&Math.abs(dy)>Math.abs(dx)*1.5)drop();
+  else if(!moved&&Math.abs(dx)<10&&Math.abs(dy)<10)turn();
+  tx=null});
+
+addEventListener('keydown',e=>{const k={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'rot',ArrowDown:'down',' ':'drop'}[e.key];
+  if(k){e.preventDefault();act[k]()}else if(e.key==='p'||e.key==='Escape')pause()});
+$('go').addEventListener('click',()=>{state==='pause'?pause():start()});
+$('pause').addEventListener('click',pause);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')pause()});
+}
+</script>
+</body>
+</html>
